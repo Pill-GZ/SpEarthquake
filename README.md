@@ -18,8 +18,8 @@ Applying techniques in spatial statistics to the analysis of Seismic activity da
 
 1. plate tectonics: distance to plate boundaries
 2. fracking: distance to fracking sites
+location of drilling sites in PA: https://www.paoilandgasreporting.state.pa.us/publicreports/Modules/DataExports/DataExports.aspx
 3. volanic activities: distance to active/inactive volcanoes
-4. 
 
 
 ## Science!
