@@ -18,10 +18,17 @@ Applying techniques in spatial statistics to the analysis of Seismic activity da
 
 1. plate tectonics: distance to plate boundaries
 2. fracking: distance to fracking sites
-location of drilling sites in PA: https://www.paoilandgasreporting.state.pa.us/publicreports/Modules/DataExports/DataExports.aspx \n
-Hydraulic Fracturing and Induced Seismicity Study: http://energy.usgs.gov/OilGas/UnconventionalOilGas/HydraulicFracturing.aspx#3892416-data \n
-Data on Hydraulic Fracturing: http://pubs.usgs.gov/ds/0868/ \n
-http://shalebubble.org/dbd-map/
+
+location of drilling sites in PA: https://www.paoilandgasreporting.state.pa.us/publicreports/Modules/DataExports/DataExports.aspx
+
+Hydraulic Fracturing and Induced Seismicity Study: http://energy.usgs.gov/OilGas/UnconventionalOilGas/HydraulicFracturing.aspx#3892416-data
+
+Data on Hydraulic Fracturing: http://pubs.usgs.gov/ds/0868/
+
+Shapefiles for Oil Shales: http://energy.usgs.gov/OilGas/UnconventionalOilGas/OilShale/OilShaleDataDownload.aspx
+
+A Shale Oil Study site: http://shalebubble.org/dbd-map/
+
 3. volanic activities: distance to active/inactive volcanoes
 
 
