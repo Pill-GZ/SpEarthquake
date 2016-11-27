@@ -33,6 +33,8 @@ Applying techniques in spatial statistics to the analysis of Seismic activity da
  A Shale Oil Study site: http://shalebubble.org/dbd-map/
  
  Class 2 well counts by state: http://projects.propublica.org/graphics/underground-injection-wells
+ 
+ Oklahoma Class II Injection Wells: http://www.arcgis.com/home/webmap/viewer.html?layers=505a96ebfeac44c0951dcd1f773b970b&useExisting=1
 
 3. volanic activities: distance to active/inactive volcanoes
 
