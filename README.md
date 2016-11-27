@@ -31,6 +31,8 @@ Applying techniques in spatial statistics to the analysis of Seismic activity da
  Shapefiles for Oil Shales: http://energy.usgs.gov/OilGas/UnconventionalOilGas/OilShale/OilShaleDataDownload.aspx
 
  A Shale Oil Study site: http://shalebubble.org/dbd-map/
+ 
+ Class 2 well counts by state: http://projects.propublica.org/graphics/underground-injection-wells
 
 3. volanic activities: distance to active/inactive volcanoes
 
