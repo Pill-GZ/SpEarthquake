@@ -39,5 +39,6 @@ Applying techniques in spatial statistics to the analysis of Seismic activity da
 
 1. What causes earthquakes: https://www2.usgs.gov/faq/categories/9827/3343
 2. Man-made earthquakes and prevention: https://www2.usgs.gov/faq/categories/9827/3273
-3. Deep well injection induced earthquakes https://earthquake.usgs.gov/research/induced/myths.php
+3. Deep well injection induced earthquakes: https://earthquake.usgs.gov/research/induced/myths.php
+4. Earthquakes induced by fluid injection: https://www2.usgs.gov/faq/taxonomy/term/9833
 
