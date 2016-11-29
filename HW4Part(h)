@@ -1,0 +1,16 @@
+population.im <- function(resolution){
+  xrange <- crime.Baltimore.ppp$window$xrange
+  yrange <- crime.Baltimore.ppp$window$yrange
+  population.Baltimore <- matrix(NA,resolution,resolution)
+  population.Lon <- seq(xrange[1], xrange[2], length.out = resolution)
+  population.Lat <- seq(yrange[1], yrange[2], length.out = resolution)
+  attach(Baltimore_population)
+  for (i in 1:resolution) {
+    for (j in 1:resolution) {
+      distances <- (population.Lon[i] - Lon) ^ 2 + (population.Lat[j] - Lat) ^ 2
+      population.Baltimore[i,j] <- Tot_population[which.min(distances)]
+    }
+  }
+  detach(Baltimore_population)
+  return(as.im(t(population.Baltimore), window))
+}
