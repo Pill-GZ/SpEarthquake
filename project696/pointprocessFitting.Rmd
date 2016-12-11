@@ -1,0 +1,298 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r load all required libraries}
+library(spatstat)
+library(maps)
+library(maptools)
+```
+
+```{r}
+rm(list = ls())
+covariates <- read.csv("All_Covariates.txt", stringsAsFactors = F)
+
+(range(covariates$lon))
+(range(covariates$lat))
+
+extractMatrix <- function(data, lon, lat){
+  covariate <- matrix(NA, nrow = length(unique(lat)), ncol = length(unique(lon)))
+  for (rowId in 1:length(data)) {
+    covariate[match(lat[rowId], unique(lat)),
+              match(lon[rowId], unique(lon))] = data[rowId]
+  }
+  as.im(covariate,
+        W = as.owin(c(xmin = -125.5, xmax = -66.5, ymin = 24.5, ymax = 49.5)))
+}
+
+extractMatrixWindow <- function(data, lon, lat, window){
+  
+  inside <- matrix(inside.owin(
+    x = rep(unique(lon), each = length(unique(lat))),
+    y = rep(unique(lat), length(unique(lon))),
+    w = window
+    ), length(unique(lat)), length(unique(lon)))
+  
+  covariate <- matrix(NA, nrow = length(unique(lat)), ncol = length(unique(lon)))
+  for (rowId in 1:length(data)) {
+    if (inside[match(lat[rowId], unique(lat)),
+               match(lon[rowId], unique(lon))]) {
+      covariate[match(lat[rowId], unique(lat)),
+                match(lon[rowId], unique(lon))] = data[rowId]
+    }
+  }
+  as.im(covariate, W = window)
+}
+
+image.map <- function(image, title = "title") {
+  mat <- apply(image$v, 2, rev)
+  image(as.im((mat)), main = title)
+}
+
+covariates <- as.data.frame(lapply(covariates,function(x) {as.numeric(gsub(",", "", x))}))
+```
+
+```{r}
+names(covariates)
+lon <- covariates$lon
+lat <- covariates$lat
+```
+
+```{r}
+Thick <- extractMatrix(covariates$Thick, lon, lat)
+par(mar = c(1,1,1,1))
+image.map(Thick, "Plate thickness")
+```
+
+```{r}
+NEAR_DIST <- extractMatrix(covariates$NEAR_DIST, lon, lat)
+image.map(log(1/NEAR_DIST), "Log-inverse distance to plate boundary")
+```
+
+```{r}
+Area <- extractMatrix(covariates$Area, lon, lat)
+Area[Area == 0] <- NA #unique(sort(Area))[2]
+image.map(Area, "Area of States")
+```
+
+```{r}
+class1 <- extractMatrix(covariates$class1/covariates$Area, lon, lat)
+image.map(class1, "Class 1 Injection Wells per Unit Area")
+class1 <- extractMatrix(covariates$class1/(covariates$Area+1), lon, lat)
+```
+
+```{r}
+class1o <- extractMatrix(covariates$class1o/covariates$Area, lon, lat)
+image.map(class1o, "Class 1 Other Injection Wells per Unit Area")
+class1o <- extractMatrix(covariates$class1o/(covariates$Area+1), lon, lat)
+```
+
+```{r}
+class2 <- extractMatrix(covariates$class2/covariates$Area, lon, lat)
+image.map(class2, "Class 2 Injection Wells per Unit Area")
+class2 <- extractMatrix(covariates$class2/(covariates$Area+1), lon, lat)
+```
+
+```{r}
+MIVER <- extractMatrix(covariates$MIVER/covariates$Area, lon, lat)
+image.map(MIVER, "Number of Mechanical Integrity Violation
+Enhanced Recovery Wells per Unit Area")
+MIVER <- extractMatrix(covariates$MIVER/(covariates$Area+1), lon, lat)
+```
+
+```{r}
+MIVSWD <- extractMatrix(covariates$MIVSWD/covariates$Area, lon, lat)
+image.map(MIVSWD, "Number of Mechanical Integrity Violation
+Salt Water Disposal Wells per Unit Area")
+MIVSWD <- extractMatrix(covariates$MIVSWD/(covariates$Area+1), lon, lat)
+```
+
+# plot
+
+```{r}
+#events <- read.csv("2010-2.5above.csv")
+#events <- read.csv("2010-2015-4.5above.csv")
+events <- read.csv("2011-2016-2.5above.csv")
+events2000 <- read.csv("2000-2005-2.5above.csv")
+sapply(events,class)
+hist(events$depth,breaks = 100)
+events <- events[events$type == "earthquake",]
+```
+
+```{r cache=TRUE}
+library(ggmap)
+mapImage <- get_map(location = c(left = -127.5, bottom = 24.5, right = -65.5, top = 49.5),
+  color = "color",
+  source = "osm",
+  maptype = "terrain"
+  # zoom = 4
+)
+```
+
+```{r}
+plotevents <- events[events$depth>12,]
+ggmap(mapImage) + 
+  geom_point(data = events, aes(x=longitude, y=latitude), 
+             color="red", size=events$mag, alpha=0.1)
+```
+
+
+Earthquakes seem to be clustering around west coast, boundary of the North America Plate. Also clustered are the earthquakes near the Intermountain Seismic Belt, which is a terrain actively producing seismic activities. 
+
+There is a cluster of earthquakes in the state of Oklahoma, where earthquakes were extremely rare before the year 2005. 
+
+We plot the same map using data from 2000 to 2005:
+
+```{r}
+plotevents <- events[events$depth>12,]
+ggmap(mapImage) + 
+  geom_point(data = events2000, aes(x=longitude, y=latitude), 
+             color="red", size=events2000$mag, alpha=0.1)
+```
+
+The cluster along the North America Plate boundary and Intermountain Seismic Belt was present. However, the clustering of events in Oklahoma was non-existant.
+
+## Test for spatial randomness with K and L functions
+
+First create the ppp object.
+
+```{r message=FALSE, warning=FALSE}
+index <- sample(1:length(events$time), size = 200, replace = F)
+
+statesmap <- map("state", fill = T, plot = F)
+state.IDs <- sapply(strsplit(statesmap$names,":"),function(x) x[1])
+states.poly <- map2SpatialPolygons(statesmap,IDs=state.IDs,proj4string=CRS("+proj=longlat + datum=wgs84"))
+# window <- as.owin(states.poly)
+window <- as.owin(c(xmin = -125.5, xmax = -66.5, ymin = 24.5, ymax = 49.5))
+# plot(states.poly)
+
+eventsSample.ppp <- ppp(x=events$longitude[index],
+                        y=events$latitude[index],
+                        window=window)
+events.ppp <- ppp(x=events$longitude,
+                  y=events$latitude,
+                  window=window)
+```
+
+Now we can perform the test:
+
+
+```{r cache=TRUE, results='hide', message=FALSE}
+K.events <- Kest(eventsSample.ppp)
+envjapK <- envelope(eventsSample.ppp, fun = Kest, nrank = 1, nsim = 99)
+envjapL <- envelope(eventsSample.ppp, fun = Lest, nrank = 1, nsim = 99)
+```
+
+```{r}
+plot(K.events, main="K function \n Earthquakes")
+plot(envjapK, main = "K function \n Earthquakes")
+plot(K.events, sqrt(iso/pi) ~ r, ylab = "L(r)", 
+     main = "L function \n Earthquakes")
+abline(a = 0, b = 1 ,col = "grey")
+plot(envjapL, main="L function \n Earthquakes")
+```
+
+Based on the K- and L-functions, the point pattern exhibits strong evidence of being a clustered point process.
+
+
+## (c) Perform chi-square tests
+
+### i. H a : the spatial point pattern is not a homogeneous Poisson process
+
+```{r}
+# Two-sided test for CSR based on a null hypothesis of homogenous intensity function
+quadrat.test(events.ppp)
+```
+
+P-value is extremely small. The test statistic indicates strong evidence for a non-homogeneous Poisson process.
+
+
+#### ii. Ha : the spatial point pattern is a regular point pattern
+
+```{r}
+# Testing against the alternative hypothesis of a regular point process
+quadrat.test(events.ppp, alternative="regular")
+```
+
+P-value is practically 1. The point patter does not behave like a regular point process.
+
+#### iii. H a : the spatial point pattern is a clustered point pattern.
+
+```{r}
+# Testing against the alternative hypothesis of a clustered point process
+quadrat.test(events.ppp, alternative="clustered")
+```
+
+It does behave like a clustered point process!
+
+
+## (d) Monte Carlo test for clustered point process
+
+Simulation test also confirms the finding.
+
+Test is by default conditional upon the observed number of points.
+
+```{r}
+# Testing against the alternative hypothesis of a clustered point process via Monte Carlo simulations
+quadrat.test(events.ppp, alternative="clustered", method="M", nsim=4999)
+```
+
+Again, the p-value is extremely small, indicating evidence that the point pattern is  clustered.
+
+
+## (e) Kernel estimate of intensity function
+
+Let's esimate a kernel density with optimal bandwidth calculated with `bw.diggle`.
+
+```{r cache = TRUE}
+sigma = bw.diggle(events.ppp)
+events.density <- density.ppp(events.ppp,
+                              sigma = sigma)
+par(mar = c(1,1,1,1))
+plot(log(events.density+1), main = "Kenel Estimated of Earthquake Log Intensity")
+```
+
+The optimal banwidth for the kernel estimation is `r sigma` of a degree in terms of longitude of latitude. We have ignored the correction in for curvature in the longitude. The distance between two consecutive longitude lines are 60 nautical miles apart at the euqator, and is around 40 nautical miles at the northernmost point of Contiguous United States. Note, however, that two consequtive latitude lines are always 60 nautical miles apart.
+
+The results of the cross-validated band-width calculates to around 1300 meters, quite small considering the scale of influence an earthquake event. While an earthquake shakes buildings dozens of miles from the epicenter, the estimated non-parametric model tells us that the epicenters of the earthquakes show us right next to each other.
+
+A final comment on the kernel method is that the current smoothing model ignores the temporal nature of events. Stronger earthquakes are often followed by aftershocks at the same locations. A more sound method for cross-validation is, instead of holding out folds of events in the observation, to perform psuedo-out-of sample cross-validation in a sequential manner over time.
+
+## (f) Fit a log-Gaussian Cox process model
+
+```{r cache = TRUE}
+u.logcp <- lgcp.estK(events.ppp, c(sigma2=7, alpha=1))
+u.logcp
+plot(u.logcp,main="Fitted K function and theoretical K function \n Earthquakes in North America, log Gaussian-Cox process")
+```
+
+
+## (g) Fit a Mátern cluster point process model
+
+```{r echo=FALSE}
+u.matclust <- matclust.estK(events.ppp, c(kappa=0.003, R=0.2))
+u.matclust
+plot(u.matclust,main="Fitted K function and theoretical K function \n Earthquakes in North America, Matern cluster process")
+```
+
+## (h) Fit an inhomogeneous Poisson process with a covariates
+
+
+
+```{r}
+fit <- ppm(events.ppp ~ I(log(1/NEAR_DIST)) + Thick)
+fit
+```
+
+
+```{r}
+fit <- ppm(events.ppp ~ I(log((1/NEAR_DIST))) + class1o + class2  + MIVSWD)
+fit
+```
+
+
